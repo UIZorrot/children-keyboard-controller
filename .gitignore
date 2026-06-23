@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dist-electron/
+native/keyboard-blocker/build/
+.superpowers/
+.worktrees/
+*.log
