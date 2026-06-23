@@ -1,0 +1,54 @@
+{
+  "name": "children-keyboard-controller",
+  "version": "0.1.0",
+  "description": "Windows-only full-screen keyboard mashing visual controller for children.",
+  "main": "dist-electron/main.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:native && concurrently -k \"vite --config vite.renderer.config.ts --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
+    "build": "npm run clean && npm run test && npm run build:native && npm run build:main && npm run build:preload && npm run build:renderer",
+    "build:main": "esbuild electron/main.ts --bundle --platform=node --format=esm --external:electron --outfile=dist-electron/main.js",
+    "build:preload": "esbuild electron/preload.ts --bundle --platform=node --format=cjs --external:electron --outfile=dist-electron/preload.cjs",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build:native": "node scripts/build-native.cjs",
+    "clean": "rimraf dist dist-electron native/keyboard-blocker/build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder"
+  },
+  "build": {
+    "appId": "local.children.keyboard-controller",
+    "productName": "Children Keyboard Controller",
+    "files": [
+      "dist/**",
+      "dist-electron/**",
+      "native/keyboard-blocker/build/Release/keyboard_blocker.node",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "native/keyboard-blocker/build/Release/keyboard_blocker.node"
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
+  "dependencies": {
+    "electron": "^31.7.7",
+    "node-addon-api": "^8.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.15",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron-builder": "^24.13.3",
+    "esbuild": "^0.23.1",
+    "node-gyp": "^10.2.0",
+    "rimraf": "^5.0.10",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.19",
+    "vitest": "^2.1.9",
+    "wait-on": "^7.2.0"
+  }
+}
