@@ -1,0 +1,35 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #070b0e;
+  cursor: none;
+  user-select: none;
+}
+
+#visual-canvas {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+#exit-progress {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    conic-gradient(rgba(150, 190, 175, 0.55) var(--progress, 0deg), rgba(255, 255, 255, 0.07) 0),
+    radial-gradient(circle at center, #070b0e 56%, transparent 58%);
+  transition: opacity 120ms ease;
+}
+
+#exit-progress.visible {
+  opacity: 1;
+}
