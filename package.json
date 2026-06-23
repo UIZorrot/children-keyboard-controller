@@ -2,6 +2,7 @@
   "name": "children-keyboard-controller",
   "version": "0.1.0",
   "description": "Windows-only full-screen keyboard mashing visual controller for children.",
+  "author": "Local",
   "main": "dist-electron/main.js",
   "private": true,
   "type": "module",
@@ -35,13 +36,13 @@
     }
   },
   "dependencies": {
-    "electron": "^31.7.7",
     "node-addon-api": "^8.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.15",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
+    "electron": "^31.7.7",
     "electron-builder": "^24.13.3",
     "esbuild": "^0.23.1",
     "node-gyp": "^10.2.0",
