@@ -1,5 +1,5 @@
-export type EffectKind = "circle" | "square" | "triangle" | "particle" | "ripple";
-export type EffectRole = "primary" | "secondary" | "particle" | "ripple";
+export type EffectKind = "house" | "tree" | "hill" | "cloud" | "flower" | "leaf" | "pathStone" | "sparkle";
+export type EffectRole = "ground" | "midground" | "sky" | "detail" | "sparkle";
 
 export type Effect = {
   id: number;

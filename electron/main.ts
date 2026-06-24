@@ -41,7 +41,7 @@ async function createWindow(): Promise<void> {
     kiosk: false,
     alwaysOnTop: true,
     autoHideMenuBar: true,
-    backgroundColor: "#4d4534",
+    backgroundColor: "#fff4d8",
     show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),

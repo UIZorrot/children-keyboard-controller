@@ -29,7 +29,7 @@ describe("EffectEngine", () => {
     expect(engine.activeRippleCount).toBeGreaterThan(0);
     expect(engine.activeAnchorCount).toBeGreaterThan(0);
 
-    engine.update(7000);
+    engine.update(17000);
 
     expect(engine.effects.length).toBe(0);
     expect(engine.anchors.length).toBe(0);
@@ -49,5 +49,19 @@ describe("EffectEngine", () => {
 
     expect(engine.effects.length).toBeGreaterThan(activeBeforeResize);
     expect(engine.anchors.some(anchor => anchor.x > 320 || anchor.y > 220)).toBe(true);
+  });
+
+  it("spawns recognizable storybook world items for key presses", () => {
+    const engine = new EffectEngine({ width: 900, height: 600, seed: 21 });
+
+    for (let i = 0; i < 12; i += 1) {
+      engine.spawnForKey(`Key${i}`);
+    }
+
+    const kinds = new Set(engine.effects.map(effect => effect.kind));
+    expect(kinds.has("house") || kinds.has("tree") || kinds.has("hill")).toBe(true);
+    expect(kinds.has("sparkle") || kinds.has("leaf") || kinds.has("flower")).toBe(true);
+    expect(engine.effects.every(effect => effect.x >= 0 && effect.x <= 900)).toBe(true);
+    expect(engine.effects.every(effect => effect.y >= 0 && effect.y <= 600)).toBe(true);
   });
 });
