@@ -2,6 +2,7 @@
 #include <windows.h>
 
 #include <atomic>
+#include <cstring>
 #include <thread>
 
 namespace {
@@ -81,9 +82,58 @@ Napi::Value StopBlocking(const Napi::CallbackInfo& info) {
   return env.Undefined();
 }
 
+Napi::Value ForceForegroundWindow(const Napi::CallbackInfo& info) {
+  Napi::Env env = info.Env();
+  if (info.Length() < 1 || !info[0].IsBuffer()) {
+    Napi::TypeError::New(env, "Expected a native window handle buffer").ThrowAsJavaScriptException();
+    return Napi::Boolean::New(env, false);
+  }
+
+  Napi::Buffer<unsigned char> handleBuffer = info[0].As<Napi::Buffer<unsigned char>>();
+  uintptr_t handleValue = 0;
+  const size_t bytesToCopy = handleBuffer.Length() < sizeof(handleValue) ? handleBuffer.Length() : sizeof(handleValue);
+  memcpy(&handleValue, handleBuffer.Data(), bytesToCopy);
+
+  HWND hwnd = reinterpret_cast<HWND>(handleValue);
+  if (hwnd == nullptr || !IsWindow(hwnd)) {
+    return Napi::Boolean::New(env, false);
+  }
+
+  ShowWindow(hwnd, SW_RESTORE);
+  SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW);
+
+  DWORD targetThreadId = GetWindowThreadProcessId(hwnd, nullptr);
+  DWORD foregroundThreadId = GetWindowThreadProcessId(GetForegroundWindow(), nullptr);
+  DWORD currentThreadId = GetCurrentThreadId();
+  const bool attachForeground = foregroundThreadId != 0 && foregroundThreadId != currentThreadId;
+  const bool attachTarget = targetThreadId != 0 && targetThreadId != currentThreadId;
+
+  if (attachForeground) {
+    AttachThreadInput(currentThreadId, foregroundThreadId, TRUE);
+  }
+  if (attachTarget) {
+    AttachThreadInput(currentThreadId, targetThreadId, TRUE);
+  }
+
+  BringWindowToTop(hwnd);
+  SetActiveWindow(hwnd);
+  SetFocus(hwnd);
+  const BOOL foregroundResult = SetForegroundWindow(hwnd);
+
+  if (attachTarget) {
+    AttachThreadInput(currentThreadId, targetThreadId, FALSE);
+  }
+  if (attachForeground) {
+    AttachThreadInput(currentThreadId, foregroundThreadId, FALSE);
+  }
+
+  return Napi::Boolean::New(env, foregroundResult || GetForegroundWindow() == hwnd);
+}
+
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
   exports.Set("startBlocking", Napi::Function::New(env, StartBlocking));
   exports.Set("stopBlocking", Napi::Function::New(env, StopBlocking));
+  exports.Set("forceForegroundWindow", Napi::Function::New(env, ForceForegroundWindow));
   return exports;
 }
 

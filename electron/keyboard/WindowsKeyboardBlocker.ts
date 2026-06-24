@@ -1,21 +1,17 @@
-import { app } from "electron";
-import { createRequire } from "node:module";
-import path from "node:path";
 import { KeyboardBlocker } from "./KeyboardBlocker";
-
-type NativeKeyboardBlocker = {
-  startBlocking(): void;
-  stopBlocking(): void;
-};
+import {
+  loadNativeKeyboardBlockerModule,
+  NativeKeyboardBlockerModule
+} from "../native/loadNativeKeyboardBlockerModule";
 
 export class WindowsKeyboardBlocker implements KeyboardBlocker {
-  private nativeModule: NativeKeyboardBlocker | null = null;
+  private nativeModule: NativeKeyboardBlockerModule | null = null;
   private running = false;
 
   async start(): Promise<void> {
     if (process.platform !== "win32" || this.running) return;
 
-    this.nativeModule = this.loadNativeModule();
+    this.nativeModule = loadNativeKeyboardBlockerModule();
     this.nativeModule.startBlocking();
     this.running = true;
   }
@@ -25,16 +21,5 @@ export class WindowsKeyboardBlocker implements KeyboardBlocker {
 
     this.nativeModule.stopBlocking();
     this.running = false;
-  }
-
-  private loadNativeModule(): NativeKeyboardBlocker {
-    const require = createRequire(import.meta.url);
-    const devPath = path.resolve(process.cwd(), "native/keyboard-blocker/build/Release/keyboard_blocker.node");
-    const packagedPath = path.join(
-      process.resourcesPath,
-      "app.asar.unpacked/native/keyboard-blocker/build/Release/keyboard_blocker.node"
-    );
-    const modulePath = app.isPackaged ? packagedPath : devPath;
-    return require(modulePath) as NativeKeyboardBlocker;
   }
 }

@@ -4,7 +4,7 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: #17120d;
+  background: #4d4534;
   cursor: none;
   user-select: none;
 }
@@ -26,7 +26,7 @@ body {
   pointer-events: none;
   background:
     conic-gradient(rgba(150, 174, 150, 0.58) var(--progress, 0deg), rgba(255, 255, 255, 0.08) 0),
-    radial-gradient(circle at center, #17120d 56%, transparent 58%);
+    radial-gradient(circle at center, #4d4534 56%, transparent 58%);
   transition: opacity 120ms ease;
 }
 

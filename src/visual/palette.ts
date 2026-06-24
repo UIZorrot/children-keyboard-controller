@@ -1,11 +1,11 @@
 export const visualPalette = {
-  background: "#17120d",
-  backgroundSoft: "#1e1912",
+  background: "#4d4534",
+  backgroundSoft: "#5c513e",
   atmosphere: [
-    "rgba(105, 128, 105, 0.18)",
-    "rgba(93, 113, 127, 0.14)",
-    "rgba(121, 101, 137, 0.13)",
-    "rgba(143, 119, 76, 0.12)"
+    "rgba(139, 156, 125, 0.23)",
+    "rgba(116, 135, 145, 0.18)",
+    "rgba(149, 128, 160, 0.17)",
+    "rgba(178, 151, 100, 0.17)"
   ],
   link: "rgba(151, 168, 150, 0.32)",
   ripple: "rgba(149, 165, 140, 0.22)",

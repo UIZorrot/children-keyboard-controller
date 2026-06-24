@@ -2,13 +2,35 @@ import { app, BrowserWindow, ipcMain, Menu } from "electron";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { WindowsKeyboardBlocker } from "./keyboard/WindowsKeyboardBlocker";
+import { WindowsForegroundController } from "./window/WindowsForegroundController";
+import { focusChildWindow } from "./window/focusChildWindow";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
 let shuttingDown = false;
+let focusKeepAliveTimer: ReturnType<typeof setInterval> | null = null;
 const keyboardBlocker = new WindowsKeyboardBlocker();
+const foregroundController = new WindowsForegroundController();
+
+function startFocusKeepAlive(): void {
+  if (focusKeepAliveTimer) return;
+
+  focusKeepAliveTimer = setInterval(() => {
+    if (!shuttingDown) {
+      focusChildWindow(mainWindow, app, foregroundController);
+    }
+  }, 250);
+  focusKeepAliveTimer.unref?.();
+}
+
+function stopFocusKeepAlive(): void {
+  if (!focusKeepAliveTimer) return;
+
+  clearInterval(focusKeepAliveTimer);
+  focusKeepAliveTimer = null;
+}
 
 async function createWindow(): Promise<void> {
   Menu.setApplicationMenu(null);
@@ -19,7 +41,8 @@ async function createWindow(): Promise<void> {
     kiosk: false,
     alwaysOnTop: true,
     autoHideMenuBar: true,
-    backgroundColor: "#070b0e",
+    backgroundColor: "#4d4534",
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
@@ -32,8 +55,8 @@ async function createWindow(): Promise<void> {
   mainWindow.setMenuBarVisibility(false);
 
   mainWindow.on("blur", () => {
-    if (!shuttingDown && mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.focus();
+    if (!shuttingDown) {
+      setTimeout(() => focusChildWindow(mainWindow, app, foregroundController), 80);
     }
   });
 
@@ -46,6 +69,10 @@ async function createWindow(): Promise<void> {
   } else {
     await mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
+
+  focusChildWindow(mainWindow, app, foregroundController);
+  setTimeout(() => focusChildWindow(mainWindow, app, foregroundController), 250);
+  startFocusKeepAlive();
 
   try {
     await keyboardBlocker.start();
@@ -61,6 +88,7 @@ ipcMain.on("request-exit", () => {
 async function shutdown(): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
+  stopFocusKeepAlive();
 
   try {
     await keyboardBlocker.stop();
