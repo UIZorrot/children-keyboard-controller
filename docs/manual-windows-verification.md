@@ -30,3 +30,11 @@ Run these checks on the Windows machine that will run the app.
 - Confirm the visual density remains bounded.
 - Confirm memory does not grow continuously after effects fade.
 - Confirm CPU returns to a stable idle level after input stops.
+
+## Visual Upgrade
+
+- Confirm the background reads as deep warm beige / taupe, not pure black.
+- Press keys slowly. Expected: each press creates a soft burst with a ripple and main shape.
+- Press keys repeatedly. Expected: recent shapes form gentle constellation links.
+- Mash keys for 60 seconds. Expected: visual density remains bounded and no bright flashing appears.
+- Hold `Esc` for 3 seconds. Expected: exit behavior is unchanged.
