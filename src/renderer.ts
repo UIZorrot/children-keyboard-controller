@@ -56,9 +56,15 @@ function swallowKeyboardEvent(event: KeyboardEvent): void {
   }
 }
 
+function handleMouseEvent(event: MouseEvent): void {
+  // Spawn effects at the click location
+  engine.spawnForClick(event.clientX, event.clientY);
+}
+
 window.addEventListener("resize", () => canvasRenderer.resize());
 window.addEventListener("keydown", swallowKeyboardEvent, { capture: true });
 window.addEventListener("keyup", swallowKeyboardEvent, { capture: true });
+window.addEventListener("mousedown", handleMouseEvent, { capture: true });
 window.addEventListener("contextmenu", event => event.preventDefault());
 
 canvasRenderer.resize();

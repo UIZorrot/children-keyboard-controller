@@ -15,12 +15,9 @@ function luminance({ r, g, b }: { r: number; g: number; b: number }): number {
 }
 
 describe("visualPalette", () => {
-  it("uses a pale warm white-beige background rather than a dark backdrop", () => {
+  it("uses a very dark background", () => {
     const rgb = hexToRgb(visualPalette.background);
 
-    expect(rgb.r).toBeGreaterThanOrEqual(rgb.g);
-    expect(rgb.g).toBeGreaterThan(rgb.b);
-    expect(luminance(rgb)).toBeGreaterThanOrEqual(218);
-    expect(luminance(rgb)).toBeLessThanOrEqual(248);
+    expect(luminance(rgb)).toBeLessThanOrEqual(20); // Very dark
   });
 });

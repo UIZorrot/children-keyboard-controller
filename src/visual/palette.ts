@@ -1,27 +1,23 @@
 export const visualPalette = {
-  background: "#fff4d8",
-  backgroundSoft: "#f8e8bf",
-  outline: "rgba(76, 63, 45, 0.52)",
-  fineLine: "rgba(76, 63, 45, 0.28)",
-  ground: "#eadba9",
-  groundSoft: "#f2e3b5",
-  groundShadow: "rgba(194, 159, 93, 0.18)",
-  sage: "#bfd39b",
-  sageDark: "#9fb978",
-  leafYellow: "#f4d66b",
-  leafShade: "#e6b95b",
-  peach: "#f2b57d",
-  clay: "#c98668",
-  skyBlue: "#b7d6df",
-  cream: "#fffaf0",
-  windowGlow: "#fff0b7",
-  atmosphere: [
-    "rgba(183, 214, 223, 0.32)",
-    "rgba(244, 214, 107, 0.2)",
-    "rgba(191, 211, 155, 0.18)",
-    "rgba(242, 181, 125, 0.14)"
+  background: "#050505",
+  backgroundSoft: "#0a0a0a",
+  outline: "rgba(255, 255, 255, 0.8)",
+  fineLine: "rgba(255, 255, 255, 0.4)",
+  neonColors: [
+    "#D83A6D", // Soft Pink
+    "#22A7A7", // Soft Cyan
+    "#C8B936", // Soft Yellow
+    "#3EB56D", // Soft Lime Green
+    "#9A44CA", // Soft Purple
+    "#D16A46", // Soft Orange
   ],
-  link: "rgba(126, 112, 76, 0.18)",
-  ripple: "rgba(201, 174, 112, 0.22)",
-  particle: "rgba(216, 151, 111, 0.42)"
+  atmosphere: [
+    "rgba(255, 16, 83, 0.08)",
+    "rgba(0, 240, 255, 0.08)",
+    "rgba(176, 38, 255, 0.08)",
+    "rgba(0, 255, 102, 0.08)"
+  ],
+  link: "rgba(255, 255, 255, 0.2)",
+  ripple: "rgba(255, 255, 255, 0.3)",
+  particle: "rgba(255, 255, 255, 0.6)"
 } as const;

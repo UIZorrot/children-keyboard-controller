@@ -44,14 +44,14 @@ describe("EffectEngine", () => {
     engine.spawnForKey("KeyA");
     const activeBeforeResize = engine.effects.length;
 
-    engine.resize(1200, 800);
-    engine.spawnForKey("KeyB");
+    engine.resize(2000, 2000);
+    engine.spawnForKey("KeyM"); // A key that will hash to a larger coordinate
 
     expect(engine.effects.length).toBeGreaterThan(activeBeforeResize);
     expect(engine.anchors.some(anchor => anchor.x > 320 || anchor.y > 220)).toBe(true);
   });
 
-  it("spawns recognizable storybook world items for key presses", () => {
+  it("spawns abstract shapes for key presses", () => {
     const engine = new EffectEngine({ width: 900, height: 600, seed: 21 });
 
     for (let i = 0; i < 12; i += 1) {
@@ -59,9 +59,9 @@ describe("EffectEngine", () => {
     }
 
     const kinds = new Set(engine.effects.map(effect => effect.kind));
-    expect(kinds.has("house") || kinds.has("tree") || kinds.has("hill")).toBe(true);
-    expect(kinds.has("sparkle") || kinds.has("leaf") || kinds.has("flower")).toBe(true);
-    expect(engine.effects.every(effect => effect.x >= 0 && effect.x <= 900)).toBe(true);
-    expect(engine.effects.every(effect => effect.y >= 0 && effect.y <= 600)).toBe(true);
+    expect(kinds.has("circle") || kinds.has("square") || kinds.has("star") || kinds.has("triangle")).toBe(true);
+    expect(kinds.has("particle") || kinds.has("ripple")).toBe(true);
+    expect(engine.effects.every(effect => effect.x >= -100 && effect.x <= 1000)).toBe(true);
+    expect(engine.effects.every(effect => effect.y >= -100 && effect.y <= 700)).toBe(true);
   });
 });

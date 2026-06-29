@@ -3,12 +3,12 @@ import {
   Anchor,
   Effect,
   EffectKind,
-  EffectRole,
   MAX_ACTIVE_ANCHORS,
   MAX_ACTIVE_PARTICLES,
   MAX_ACTIVE_RIPPLES,
   MAX_ACTIVE_SHAPES
 } from "./types";
+import { visualPalette } from "../visual/palette";
 
 type EngineOptions = {
   width: number;
@@ -16,13 +16,7 @@ type EngineOptions = {
   seed?: number;
 };
 
-const PRIMARY_KINDS: EffectKind[] = ["house", "tree", "hill", "cloud"];
-const DETAIL_KINDS: EffectKind[] = ["flower", "leaf", "pathStone", "sparkle"];
-const HOUSE_COLORS = ["#f2b57d", "#e9a37f", "#f4c46f", "#dba289"];
-const TREE_COLORS = ["#f0cf67", "#e9bd58", "#bcd49b", "#c8d99e"];
-const GROUND_COLORS = ["#eadba9", "#d9c895", "#c9d8a4", "#f0d7a4"];
-const SKY_COLORS = ["#fffaf0", "#f8f1df", "#ffffff"];
-const DETAIL_COLORS = ["#f5d86e", "#d88970", "#b8ce8f", "#f8e2a1"];
+const SHAPE_KINDS: EffectKind[] = ["circle", "square", "triangle", "star", "heart", "polygon"];
 
 export class EffectEngine {
   private nextId = 1;
@@ -49,15 +43,15 @@ export class EffectEngine {
   }
 
   get activeShapeCount(): number {
-    return this.activeEffects.filter(effect => effect.role === "ground" || effect.role === "midground" || effect.role === "sky").length;
+    return this.activeEffects.filter(effect => effect.role === "primary" || effect.role === "secondary").length;
   }
 
   get activeParticleCount(): number {
-    return this.activeEffects.filter(effect => effect.role === "detail" || effect.role === "sparkle").length;
+    return this.activeEffects.filter(effect => effect.role === "particle").length;
   }
 
   get activeRippleCount(): number {
-    return this.activeEffects.filter(effect => effect.role === "sparkle").length;
+    return this.activeEffects.filter(effect => effect.role === "ripple").length;
   }
 
   get activeAnchorCount(): number {
@@ -86,27 +80,29 @@ export class EffectEngine {
   }
 
   spawnForKey(code: string): void {
-    const center = this.spawnCenter(code);
-    this.spawnAnchor(center.x, center.y);
-    const groupRoll = this.random();
+    // Spawns at a random position across the entire screen
+    const x = this.width * (0.1 + this.random() * 0.8);
+    const y = this.height * (0.1 + this.random() * 0.8);
+    this.spawnBurst(x, y);
+  }
 
-    if (groupRoll < 0.28) {
-      this.spawnWorldItem(center.x, center.y, "house", "midground");
-      this.spawnWorldItem(center.x + this.offset(42), center.y + this.offset(14), "tree", "midground");
-    } else if (groupRoll < 0.56) {
-      this.spawnWorldItem(center.x, center.y, "tree", "midground");
-    } else if (groupRoll < 0.78) {
-      this.spawnWorldItem(center.x, center.y + 8, "hill", "ground");
-    } else {
-      this.spawnWorldItem(center.x, this.height * (0.14 + this.random() * 0.22), "cloud", "sky");
+  spawnForClick(x: number, y: number): void {
+    this.spawnBurst(x, y);
+  }
+
+  private spawnBurst(x: number, y: number): void {
+    this.spawnAnchor(x, y);
+    this.spawnRipple(x, y);
+    this.spawnShape(x, y, "primary");
+
+    const secondaryCount = 1 + Math.floor(this.random() * 2);
+    for (let i = 0; i < secondaryCount; i += 1) {
+      this.spawnShape(x, y, "secondary");
     }
 
-    const detailCount = 3 + Math.floor(this.random() * 4);
-    for (let i = 0; i < detailCount; i += 1) {
-      const kind = DETAIL_KINDS[Math.floor(this.random() * DETAIL_KINDS.length)];
-      const role: EffectRole = kind === "sparkle" ? "sparkle" : "detail";
-      const detailY = kind === "leaf" ? center.y - 40 - this.random() * 90 : center.y + this.offset(24);
-      this.spawnWorldItem(center.x + this.offset(88), detailY, kind, role);
+    const particleCount = 4 + Math.floor(this.random() * 6);
+    for (let i = 0; i < particleCount; i += 1) {
+      this.spawnParticle(x, y);
     }
   }
 
@@ -127,15 +123,21 @@ export class EffectEngine {
       }
 
       const t = effect.ageMs / effect.ttlMs;
-      const appear = Math.min(1, t / 0.18);
-      const eased = 1 - Math.pow(1 - appear, 3);
-      const fade = 1 - Math.max(0, t - 0.74) / 0.26;
+      const eased = 1 - Math.pow(1 - t, 3);
       const seconds = deltaMs / 1000;
       effect.x += effect.vx * seconds;
       effect.y += effect.vy * seconds;
       effect.size = effect.startSize + (effect.endSize - effect.startSize) * eased;
       effect.rotation += effect.rotationSpeed * seconds;
-      effect.alpha = Math.max(0, this.maxAlphaFor(effect.role) * Math.min(1, appear) * fade);
+
+      if (effect.role === "ripple") {
+        effect.alpha = Math.max(0, 0.25 * (1 - t));
+      } else {
+        // Pop in quickly, then fade out slowly
+        const appear = Math.min(1, t / 0.1);
+        const fade = 1 - Math.max(0, t - 0.7) / 0.3;
+        effect.alpha = Math.max(0, appear * fade * (effect.role === "primary" ? 0.6 : 0.4));
+      }
     }
   }
 
@@ -148,7 +150,7 @@ export class EffectEngine {
         this.anchorPool.release(anchor);
         continue;
       }
-      anchor.alpha = Math.max(0, 0.52 * (1 - anchor.ageMs / anchor.ttlMs));
+      anchor.alpha = Math.max(0, 0.5 * (1 - anchor.ageMs / anchor.ttlMs));
     }
   }
 
@@ -158,67 +160,113 @@ export class EffectEngine {
     anchor.id = this.nextId++;
     anchor.active = true;
     anchor.ageMs = 0;
-    anchor.ttlMs = 5200 + this.random() * 1200;
+    anchor.ttlMs = 4000 + this.random() * 1000;
     anchor.x = x;
     anchor.y = y;
-    anchor.size = 8 + this.random() * 10;
-    anchor.alpha = 0.28;
-    anchor.color = DETAIL_COLORS[Math.floor(this.random() * DETAIL_COLORS.length)];
+    anchor.size = 8 + this.random() * 8;
+    anchor.alpha = 0.5;
+    anchor.color = this.getRandomNeonColor();
     this.activeAnchors.push(anchor);
   }
 
-  private spawnWorldItem(x: number, y: number, kind: EffectKind, role: EffectRole): void {
-    if ((role === "ground" || role === "midground" || role === "sky") && this.activeShapeCount >= MAX_ACTIVE_SHAPES) return;
-    if ((role === "detail" || role === "sparkle") && this.activeParticleCount >= MAX_ACTIVE_PARTICLES) return;
-    if (role === "sparkle" && this.activeRippleCount >= MAX_ACTIVE_RIPPLES) return;
+  private spawnShape(x: number, y: number, role: "primary" | "secondary"): void {
+    if (this.activeShapeCount >= MAX_ACTIVE_SHAPES) return;
     const effect = this.effectPool.acquire();
-    const angle = -Math.PI / 2 + (this.random() - 0.5) * Math.PI;
-    const speed = role === "sparkle" ? 10 + this.random() * 20 : 2 + this.random() * 8;
-    const endSize = this.sizeFor(kind);
+    const angle = this.random() * Math.PI * 2;
+    const speed = role === "primary" ? 10 + this.random() * 20 : 20 + this.random() * 30;
+    const startSize = role === "primary" ? 60 + this.random() * 80 : 30 + this.random() * 40;
+
     effect.id = this.nextId++;
-    effect.kind = kind;
+    effect.kind = SHAPE_KINDS[Math.floor(this.random() * SHAPE_KINDS.length)];
     effect.role = role;
     effect.active = true;
     effect.ageMs = 0;
-    effect.ttlMs = role === "sparkle" ? 1700 + this.random() * 1200 : 9000 + this.random() * 6000;
-    const margin = Math.max(30, endSize * (kind === "hill" || kind === "cloud" || kind === "tree" ? 0.64 : 0.5));
-    effect.x = this.clamp(x, margin, Math.max(margin, this.width - margin));
-    effect.y = this.clamp(y, 20, Math.max(20, this.height - Math.max(24, endSize * 0.28)));
+    effect.ttlMs = role === "primary" ? 2000 + this.random() * 1500 : 1500 + this.random() * 1000;
+    effect.x = x + (this.random() - 0.5) * 40;
+    effect.y = y + (this.random() - 0.5) * 40;
     effect.vx = Math.cos(angle) * speed;
-    effect.vy = role === "sparkle" || kind === "leaf" ? Math.sin(angle) * speed - 8 : -1 - this.random() * 3;
-    effect.startSize = endSize * 0.2;
-    effect.endSize = endSize;
+    effect.vy = Math.sin(angle) * speed - 5;
+    effect.startSize = startSize * 0.1; // Pop in from small
+    effect.endSize = startSize;
     effect.size = effect.startSize;
-    effect.rotation = (this.random() - 0.5) * 0.24;
-    effect.rotationSpeed = (kind === "leaf" || role === "sparkle" ? 0.35 : 0.08) * (this.random() - 0.5);
+    effect.rotation = this.random() * Math.PI * 2;
+    effect.rotationSpeed = (this.random() - 0.5) * 3; // Fast rotation
     effect.alpha = 0;
-    effect.color = this.colorFor(kind);
-    effect.accentColor = DETAIL_COLORS[Math.floor(this.random() * DETAIL_COLORS.length)];
+    effect.color = this.getRandomNeonColor();
+    effect.accentColor = this.getRandomNeonColor();
+    this.activeEffects.push(effect);
+  }
+
+  private spawnRipple(x: number, y: number): void {
+    if (this.activeRippleCount >= MAX_ACTIVE_RIPPLES) return;
+    const effect = this.effectPool.acquire();
+    const startSize = 20 + this.random() * 20;
+    effect.id = this.nextId++;
+    effect.kind = "ripple";
+    effect.role = "ripple";
+    effect.active = true;
+    effect.ageMs = 0;
+    effect.ttlMs = 1000 + this.random() * 800;
+    effect.x = x;
+    effect.y = y;
+    effect.vx = 0;
+    effect.vy = 0;
+    effect.startSize = startSize;
+    effect.endSize = startSize * 4;
+    effect.size = startSize;
+    effect.rotation = 0;
+    effect.rotationSpeed = 0;
+    effect.alpha = 0.4;
+    effect.color = this.getRandomNeonColor();
+    effect.accentColor = effect.color;
+    this.activeEffects.push(effect);
+  }
+
+  private spawnParticle(x: number, y: number): void {
+    if (this.activeParticleCount >= MAX_ACTIVE_PARTICLES) return;
+    const effect = this.effectPool.acquire();
+    const angle = this.random() * Math.PI * 2;
+    const speed = 20 + this.random() * 60;
+    const size = 4 + this.random() * 6;
+    effect.id = this.nextId++;
+    effect.kind = "particle";
+    effect.role = "particle";
+    effect.active = true;
+    effect.ageMs = 0;
+    effect.ttlMs = 1000 + this.random() * 1000;
+    effect.x = x;
+    effect.y = y;
+    effect.vx = Math.cos(angle) * speed;
+    effect.vy = Math.sin(angle) * speed;
+    effect.startSize = size;
+    effect.endSize = size * 0.2;
+    effect.size = size;
+    effect.rotation = 0;
+    effect.rotationSpeed = 0;
+    effect.alpha = 0;
+    effect.color = this.getRandomNeonColor();
+    effect.accentColor = effect.color;
     this.activeEffects.push(effect);
   }
 
   private spawnCenter(code: string): { x: number; y: number } {
-    let hash = 2166136261;
-    for (let i = 0; i < code.length; i += 1) {
-      hash ^= code.charCodeAt(i);
-      hash = Math.imul(hash, 16777619) >>> 0;
-    }
-    hash = (hash ^ (hash >>> 16)) >>> 0;
-    hash = Math.imul(hash, 2246822507) >>> 0;
-    hash = (hash ^ (hash >>> 13)) >>> 0;
-    hash = Math.imul(hash, 3266489909) >>> 0;
-    hash = (hash ^ (hash >>> 16)) >>> 0;
+    let hash = 0;
+    for (let i = 0; i < code.length; i += 1) hash = (hash * 31 + code.charCodeAt(i)) >>> 0;
     return {
-      x: this.width * (0.16 + (hash % 68) / 100),
-      y: this.height * (0.52 + ((hash >> 8) % 34) / 100)
+      x: this.width * (0.1 + (hash % 80) / 100),
+      y: this.height * (0.1 + ((hash >> 8) % 80) / 100)
     };
+  }
+
+  private getRandomNeonColor(): string {
+    return visualPalette.neonColors[Math.floor(this.random() * visualPalette.neonColors.length)];
   }
 
   private createEffect(): Effect {
     return {
       id: 0,
-      kind: "sparkle",
-      role: "sparkle",
+      kind: "particle",
+      role: "particle",
       active: false,
       ageMs: 0,
       ttlMs: 0,
@@ -253,41 +301,6 @@ export class EffectEngine {
     anchor.ageMs = 0;
     anchor.ttlMs = 0;
     anchor.alpha = 0;
-  }
-
-  private sizeFor(kind: EffectKind): number {
-    if (kind === "house") return 58 + this.random() * 34;
-    if (kind === "tree") return 70 + this.random() * 58;
-    if (kind === "hill") return 120 + this.random() * 130;
-    if (kind === "cloud") return 72 + this.random() * 90;
-    if (kind === "flower") return 10 + this.random() * 10;
-    if (kind === "leaf") return 8 + this.random() * 9;
-    if (kind === "pathStone") return 14 + this.random() * 16;
-    return 8 + this.random() * 10;
-  }
-
-  private colorFor(kind: EffectKind): string {
-    if (kind === "house") return HOUSE_COLORS[Math.floor(this.random() * HOUSE_COLORS.length)];
-    if (kind === "tree") return TREE_COLORS[Math.floor(this.random() * TREE_COLORS.length)];
-    if (kind === "hill") return GROUND_COLORS[Math.floor(this.random() * GROUND_COLORS.length)];
-    if (kind === "cloud") return SKY_COLORS[Math.floor(this.random() * SKY_COLORS.length)];
-    return DETAIL_COLORS[Math.floor(this.random() * DETAIL_COLORS.length)];
-  }
-
-  private maxAlphaFor(role: EffectRole): number {
-    if (role === "sky") return 0.82;
-    if (role === "ground") return 0.78;
-    if (role === "sparkle") return 0.66;
-    if (role === "detail") return 0.82;
-    return 0.94;
-  }
-
-  private offset(range: number): number {
-    return (this.random() - 0.5) * range * 2;
-  }
-
-  private clamp(value: number, min: number, max: number): number {
-    return Math.min(max, Math.max(min, value));
   }
 
   private random(): number {

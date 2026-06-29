@@ -1,5 +1,5 @@
-export type EffectKind = "house" | "tree" | "hill" | "cloud" | "flower" | "leaf" | "pathStone" | "sparkle";
-export type EffectRole = "ground" | "midground" | "sky" | "detail" | "sparkle";
+export type EffectKind = "circle" | "square" | "triangle" | "star" | "heart" | "polygon" | "particle" | "ripple";
+export type EffectRole = "primary" | "secondary" | "particle" | "ripple";
 
 export type Effect = {
   id: number;
@@ -34,8 +34,8 @@ export type Anchor = {
   color: string;
 };
 
-export const MAX_ACTIVE_SHAPES = 90;
-export const MAX_ACTIVE_PARTICLES = 130;
-export const MAX_ACTIVE_RIPPLES = 40;
-export const MAX_ACTIVE_ANCHORS = 48;
-export const MAX_CONSTELLATION_LINKS = 80;
+export const MAX_ACTIVE_SHAPES = 120;
+export const MAX_ACTIVE_PARTICLES = 200;
+export const MAX_ACTIVE_RIPPLES = 60;
+export const MAX_ACTIVE_ANCHORS = 64;
+export const MAX_CONSTELLATION_LINKS = 100;
