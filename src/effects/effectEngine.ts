@@ -16,7 +16,7 @@ type EngineOptions = {
   seed?: number;
 };
 
-const SHAPE_KINDS: EffectKind[] = ["circle", "square", "triangle", "star", "heart", "polygon"];
+const SHAPE_KINDS: EffectKind[] = ["circle", "square", "triangle", "star", "heart", "polygon", "diamond"];
 
 export class EffectEngine {
   private nextId = 1;
@@ -112,6 +112,9 @@ export class EffectEngine {
   }
 
   private updateEffects(deltaMs: number): void {
+    const seconds = deltaMs / 1000;
+
+    // First pass: move and age
     for (let i = this.activeEffects.length - 1; i >= 0; i -= 1) {
       const effect = this.activeEffects[i];
       effect.ageMs += deltaMs;
@@ -124,7 +127,6 @@ export class EffectEngine {
 
       const t = effect.ageMs / effect.ttlMs;
       const eased = 1 - Math.pow(1 - t, 3);
-      const seconds = deltaMs / 1000;
       effect.x += effect.vx * seconds;
       effect.y += effect.vy * seconds;
       effect.size = effect.startSize + (effect.endSize - effect.startSize) * eased;
@@ -137,6 +139,66 @@ export class EffectEngine {
         const appear = Math.min(1, t / 0.1);
         const fade = 1 - Math.max(0, t - 0.7) / 0.3;
         effect.alpha = Math.max(0, appear * fade * (effect.role === "primary" ? 0.6 : 0.4));
+
+        // Screen boundary bounce for shapes
+        if (effect.role === "primary" || effect.role === "secondary") {
+          const radius = effect.size / 2;
+          if (effect.x - radius < 0) {
+            effect.x = radius;
+            effect.vx *= -1;
+          } else if (effect.x + radius > this.width) {
+            effect.x = this.width - radius;
+            effect.vx *= -1;
+          }
+
+          if (effect.y - radius < 0) {
+            effect.y = radius;
+            effect.vy *= -1;
+          } else if (effect.y + radius > this.height) {
+            effect.y = this.height - radius;
+            effect.vy *= -1;
+          }
+        }
+      }
+    }
+
+    // Second pass: physics collision between shapes
+    const shapes = this.activeEffects.filter(e => e.role === "primary" || e.role === "secondary");
+    for (let i = 0; i < shapes.length; i++) {
+      for (let j = i + 1; j < shapes.length; j++) {
+        const a = shapes[i];
+        const b = shapes[j];
+
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.hypot(dx, dy);
+        // Treat shapes roughly as circles for collision
+        const minDist = (a.size + b.size) / 2 * 0.85; // 0.85 makes the bounding box a bit forgiving
+
+        if (dist < minDist && dist > 0.01) {
+          // Resolve overlap
+          const overlap = minDist - dist;
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          // Push apart
+          const pushX = nx * overlap * 0.5;
+          const pushY = ny * overlap * 0.5;
+          a.x -= pushX;
+          a.y -= pushY;
+          b.x += pushX;
+          b.y += pushY;
+
+          // Simple elastic collision (exchange velocity along normal)
+          const kx = a.vx - b.vx;
+          const ky = a.vy - b.vy;
+          // Assume equal mass
+          const p = nx * kx + ny * ky;
+          a.vx -= p * nx;
+          a.vy -= p * ny;
+          b.vx += p * nx;
+          b.vy += p * ny;
+        }
       }
     }
   }
@@ -173,24 +235,29 @@ export class EffectEngine {
     if (this.activeShapeCount >= MAX_ACTIVE_SHAPES) return;
     const effect = this.effectPool.acquire();
     const angle = this.random() * Math.PI * 2;
-    const speed = role === "primary" ? 10 + this.random() * 20 : 20 + this.random() * 30;
-    const startSize = role === "primary" ? 60 + this.random() * 80 : 30 + this.random() * 40;
+    // Slow down the speed a bit so physics are easier to see
+    const speed = role === "primary" ? 20 + this.random() * 30 : 30 + this.random() * 40;
+    // Make shapes larger
+    const startSize = role === "primary" ? 120 + this.random() * 80 : 70 + this.random() * 50;
 
     effect.id = this.nextId++;
     effect.kind = SHAPE_KINDS[Math.floor(this.random() * SHAPE_KINDS.length)];
     effect.role = role;
     effect.active = true;
     effect.ageMs = 0;
-    effect.ttlMs = role === "primary" ? 2000 + this.random() * 1500 : 1500 + this.random() * 1000;
-    effect.x = x + (this.random() - 0.5) * 40;
-    effect.y = y + (this.random() - 0.5) * 40;
+    // Longer time to live so they have time to collide
+    effect.ttlMs = role === "primary" ? 3500 + this.random() * 2000 : 2500 + this.random() * 1500;
+
+    // Spread them out more
+    effect.x = x + (this.random() - 0.5) * 120;
+    effect.y = y + (this.random() - 0.5) * 120;
     effect.vx = Math.cos(angle) * speed;
-    effect.vy = Math.sin(angle) * speed - 5;
+    effect.vy = Math.sin(angle) * speed;
     effect.startSize = startSize * 0.1; // Pop in from small
     effect.endSize = startSize;
     effect.size = effect.startSize;
     effect.rotation = this.random() * Math.PI * 2;
-    effect.rotationSpeed = (this.random() - 0.5) * 3; // Fast rotation
+    effect.rotationSpeed = (this.random() - 0.5) * 2;
     effect.alpha = 0;
     effect.color = this.getRandomNeonColor();
     effect.accentColor = this.getRandomNeonColor();

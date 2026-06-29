@@ -108,23 +108,25 @@ export class CanvasRenderer {
     this.context.rotate(effect.rotation);
 
     const half = effect.size / 2;
-
+    
     // Neon glow effect, reduced for eye safety
     this.context.shadowBlur = effect.role === "primary" ? 10 : 5;
     this.context.shadowColor = effect.color;
-
+    
     // Gradient fill
     const gradient = this.context.createRadialGradient(0, 0, 0, 0, 0, effect.size);
     gradient.addColorStop(0, "#ffffff");
     gradient.addColorStop(0.2, effect.accentColor);
     gradient.addColorStop(1, effect.color);
-
+    
     this.context.fillStyle = gradient;
     this.context.strokeStyle = "#ffffff";
-    this.context.lineWidth = 2;
+    this.context.lineWidth = 4; // Thicker lines
+    this.context.lineJoin = "round"; // Rounded corners for polygons
+    this.context.lineCap = "round";
 
     this.context.beginPath();
-
+    
     if (effect.kind === "circle") {
       this.context.arc(0, 0, half, 0, Math.PI * 2);
     } else if (effect.kind === "square") {
@@ -137,14 +139,25 @@ export class CanvasRenderer {
     } else if (effect.kind === "star") {
       this.drawStar(0, 0, 5, half, half * 0.4);
     } else if (effect.kind === "heart") {
-      this.drawHeart(0, 0, half);
+      this.drawHeart(0, 0, effect.size);
     } else if (effect.kind === "polygon") {
       this.drawPolygon(0, 0, 6, half); // Hexagon
+    } else if (effect.kind === "diamond") {
+      this.drawDiamond(0, 0, effect.size);
     }
 
     this.context.fill();
     this.context.stroke();
     this.context.restore();
+  }
+
+  private drawDiamond(cx: number, cy: number, size: number): void {
+    const half = size / 2;
+    this.context.moveTo(cx, cy - half);
+    this.context.lineTo(cx + half * 0.7, cy);
+    this.context.lineTo(cx, cy + half);
+    this.context.lineTo(cx - half * 0.7, cy);
+    this.context.closePath();
   }
 
   private drawStar(cx: number, cy: number, spikes: number, outerRadius: number, innerRadius: number): void {
@@ -170,33 +183,18 @@ export class CanvasRenderer {
   }
 
   private drawHeart(cx: number, cy: number, size: number): void {
-    const topCurveHeight = size * 0.3;
-    this.context.moveTo(cx, cy + size * 0.3);
-    // Top left curve
+    const top = -size * 0.3;
+    this.context.moveTo(cx, cy + top);
     this.context.bezierCurveTo(
-      cx, cy,
-      cx - size * 0.8, cy - size * 0.8,
-      cx, cy + size
+      cx + size * 0.5, cy - size * 0.6, 
+      cx + size * 0.6, cy + size * 0.2, 
+      cx, cy + size * 0.45
     );
-    // Top right curve
-    this.context.moveTo(cx, cy + size * 0.3);
     this.context.bezierCurveTo(
-      cx, cy,
-      cx + size * 0.8, cy - size * 0.8,
-      cx, cy + size
+      cx - size * 0.6, cy + size * 0.2, 
+      cx - size * 0.5, cy - size * 0.6, 
+      cx, cy + top
     );
-    // Actually simpler heart math:
-    this.context.beginPath();
-    const w = size;
-    const h = size;
-    this.context.moveTo(cx, cy + h / 4);
-    this.context.quadraticCurveTo(cx, cy - h / 4, cx + w / 2, cy - h / 4);
-    this.context.quadraticCurveTo(cx + w, cy - h / 4, cx + w, cy + h / 4);
-    this.context.quadraticCurveTo(cx + w, cy + h * 3 / 4, cx, cy + h);
-    this.context.quadraticCurveTo(cx - w, cy + h * 3 / 4, cx - w, cy + h / 4);
-    this.context.quadraticCurveTo(cx - w, cy - h / 4, cx - w / 2, cy - h / 4);
-    this.context.quadraticCurveTo(cx, cy - h / 4, cx, cy + h / 4);
-    this.context.closePath();
   }
 
   private drawPolygon(cx: number, cy: number, sides: number, radius: number): void {
