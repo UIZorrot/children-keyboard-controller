@@ -1,23 +1,24 @@
 export const visualPalette = {
   background: "#050505",
   backgroundSoft: "#0a0a0a",
-  outline: "rgba(255, 255, 255, 0.8)",
-  fineLine: "rgba(255, 255, 255, 0.4)",
+  highlight: "#d8d8d8",
+  outline: "rgba(220, 220, 220, 0.68)",
+  fineLine: "rgba(180, 180, 180, 0.34)",
   neonColors: [
-    "#D83A6D", // Soft Pink
-    "#22A7A7", // Soft Cyan
-    "#C8B936", // Soft Yellow
-    "#3EB56D", // Soft Lime Green
-    "#9A44CA", // Soft Purple
-    "#D16A46", // Soft Orange
+    "#B8325D",
+    "#1B8E8E",
+    "#A99C2E",
+    "#329A5C",
+    "#8139AA",
+    "#AF593B"
   ],
   atmosphere: [
-    "rgba(255, 16, 83, 0.08)",
-    "rgba(0, 240, 255, 0.08)",
-    "rgba(176, 38, 255, 0.08)",
-    "rgba(0, 255, 102, 0.08)"
+    "rgba(210, 16, 76, 0.06)",
+    "rgba(0, 190, 205, 0.06)",
+    "rgba(145, 34, 210, 0.06)",
+    "rgba(0, 205, 86, 0.06)"
   ],
-  link: "rgba(255, 255, 255, 0.2)",
-  ripple: "rgba(255, 255, 255, 0.3)",
-  particle: "rgba(255, 255, 255, 0.6)"
+  link: "rgba(180, 180, 180, 0.16)",
+  ripple: "rgba(190, 190, 190, 0.22)",
+  particle: "rgba(210, 210, 210, 0.42)"
 } as const;

@@ -9,6 +9,7 @@ namespace {
 std::atomic<bool> running(false);
 std::thread hookThread;
 HHOOK keyboardHook = nullptr;
+HHOOK mouseHook = nullptr;
 DWORD hookThreadId = 0;
 
 bool IsPressed(int virtualKey) {
@@ -41,9 +42,18 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
   return CallNextHookEx(keyboardHook, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+  if (nCode == HC_ACTION) {
+    return 1;
+  }
+
+  return CallNextHookEx(mouseHook, nCode, wParam, lParam);
+}
+
 void HookLoop() {
   hookThreadId = GetCurrentThreadId();
   keyboardHook = SetWindowsHookExW(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandleW(nullptr), 0);
+  mouseHook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandleW(nullptr), 0);
 
   MSG msg;
   while (running.load() && GetMessageW(&msg, nullptr, 0, 0) > 0) {
@@ -54,6 +64,10 @@ void HookLoop() {
   if (keyboardHook != nullptr) {
     UnhookWindowsHookEx(keyboardHook);
     keyboardHook = nullptr;
+  }
+  if (mouseHook != nullptr) {
+    UnhookWindowsHookEx(mouseHook);
+    mouseHook = nullptr;
   }
 }
 }

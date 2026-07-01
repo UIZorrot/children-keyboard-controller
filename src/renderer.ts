@@ -1,6 +1,7 @@
 import "./platform/AppBridge";
 import { EffectEngine } from "./effects/effectEngine";
 import { EscHoldController } from "./exit/EscHoldController";
+import { POINTER_BLOCK_EVENT_TYPES, swallowPointerEvent } from "./input/inputBlocker";
 import { CanvasRenderer } from "./visual/CanvasRenderer";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#visual-canvas");
@@ -56,16 +57,13 @@ function swallowKeyboardEvent(event: KeyboardEvent): void {
   }
 }
 
-function handleMouseEvent(event: MouseEvent): void {
-  // Spawn effects at the click location
-  engine.spawnForClick(event.clientX, event.clientY);
-}
-
 window.addEventListener("resize", () => canvasRenderer.resize());
 window.addEventListener("keydown", swallowKeyboardEvent, { capture: true });
 window.addEventListener("keyup", swallowKeyboardEvent, { capture: true });
-window.addEventListener("mousedown", handleMouseEvent, { capture: true });
-window.addEventListener("contextmenu", event => event.preventDefault());
+for (const eventType of POINTER_BLOCK_EVENT_TYPES) {
+  window.addEventListener(eventType, swallowPointerEvent, { capture: true, passive: false });
+}
+window.addEventListener("contextmenu", swallowPointerEvent, { capture: true });
 
 canvasRenderer.resize();
 requestAnimationFrame(render);

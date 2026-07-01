@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { visualPalette } from "../../src/visual/palette";
 
@@ -20,4 +22,42 @@ describe("visualPalette", () => {
 
     expect(luminance(rgb)).toBeLessThanOrEqual(20); // Very dark
   });
+
+  it("keeps palette color channels below harsh full brightness", () => {
+    const colorValues = collectColorStrings(visualPalette);
+    const channels = colorValues.flatMap(color => parseColorChannels(color));
+
+    expect(channels.length).toBeGreaterThan(0);
+    expect(Math.max(...channels)).toBeLessThanOrEqual(230);
+  });
+
+  it("does not hard-code pure white in the canvas renderer", () => {
+    const rendererPath = path.resolve(process.cwd(), "src/visual/CanvasRenderer.ts");
+    const rendererSource = fs.readFileSync(rendererPath, "utf8");
+
+    expect(rendererSource).not.toContain("#ffffff");
+    expect(rendererSource).not.toContain("255, 255, 255");
+  });
 });
+
+function collectColorStrings(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(item => collectColorStrings(item));
+  if (value && typeof value === "object") return Object.values(value).flatMap(item => collectColorStrings(item));
+  return [];
+}
+
+function parseColorChannels(color: string): number[] {
+  if (color.startsWith("#")) {
+    const rgb = hexToRgb(color);
+    return [rgb.r, rgb.g, rgb.b];
+  }
+
+  const rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
+  if (!rgbaMatch) return [];
+  return rgbaMatch[1]
+    .split(",")
+    .slice(0, 3)
+    .map(channel => Number.parseFloat(channel.trim()))
+    .filter(channel => Number.isFinite(channel));
+}

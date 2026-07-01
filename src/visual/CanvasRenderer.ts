@@ -115,12 +115,12 @@ export class CanvasRenderer {
     
     // Gradient fill
     const gradient = this.context.createRadialGradient(0, 0, 0, 0, 0, effect.size);
-    gradient.addColorStop(0, "#ffffff");
+    gradient.addColorStop(0, visualPalette.highlight);
     gradient.addColorStop(0.2, effect.accentColor);
     gradient.addColorStop(1, effect.color);
     
     this.context.fillStyle = gradient;
-    this.context.strokeStyle = "#ffffff";
+    this.context.strokeStyle = visualPalette.highlight;
     this.context.lineWidth = 4; // Thicker lines
     this.context.lineJoin = "round"; // Rounded corners for polygons
     this.context.lineCap = "round";
