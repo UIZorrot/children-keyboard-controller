@@ -1,6 +1,6 @@
 {
   "name": "children-keyboard-controller",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Windows-only full-screen keyboard mashing visual controller for children.",
   "author": "Local",
   "main": "dist-electron/main.js",
