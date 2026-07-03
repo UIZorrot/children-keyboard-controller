@@ -30,9 +30,6 @@ export class CanvasRenderer {
   draw(nowMs: number): void {
     this.atmosphere.draw(this.context, this.width, this.height, nowMs);
 
-    // Set global composition to lighter for neon effects
-    this.context.globalCompositeOperation = "lighter";
-
     this.drawConstellation();
     this.drawRipples();
     this.drawShapes("secondary");
@@ -70,7 +67,7 @@ export class CanvasRenderer {
       this.context.globalAlpha = effect.alpha;
       this.context.strokeStyle = effect.color;
       this.context.lineWidth = 2; // Thinner
-      this.context.shadowBlur = 5; // Reduced glow
+      this.context.shadowBlur = 2;
       this.context.shadowColor = effect.color;
       this.context.beginPath();
       this.context.arc(Math.round(effect.x), Math.round(effect.y), effect.size / 2, 0, Math.PI * 2);
@@ -92,7 +89,7 @@ export class CanvasRenderer {
       if (effect.role !== "particle") continue;
       this.context.globalAlpha = effect.alpha;
       this.context.fillStyle = effect.color;
-      this.context.shadowBlur = 4; // Reduced glow
+      this.context.shadowBlur = 2;
       this.context.shadowColor = effect.color;
       this.context.beginPath();
       this.context.arc(Math.round(effect.x), Math.round(effect.y), effect.size / 2, 0, Math.PI * 2);
@@ -109,19 +106,17 @@ export class CanvasRenderer {
 
     const half = effect.size / 2;
     
-    // Neon glow effect, reduced for eye safety
-    this.context.shadowBlur = effect.role === "primary" ? 10 : 5;
+    this.context.shadowBlur = effect.role === "primary" ? 4 : 2;
     this.context.shadowColor = effect.color;
     
-    // Gradient fill
     const gradient = this.context.createRadialGradient(0, 0, 0, 0, 0, effect.size);
     gradient.addColorStop(0, visualPalette.highlight);
-    gradient.addColorStop(0.2, effect.accentColor);
+    gradient.addColorStop(0.28, effect.accentColor);
     gradient.addColorStop(1, effect.color);
     
     this.context.fillStyle = gradient;
-    this.context.strokeStyle = visualPalette.highlight;
-    this.context.lineWidth = 4; // Thicker lines
+    this.context.strokeStyle = effect.color;
+    this.context.lineWidth = 2;
     this.context.lineJoin = "round"; // Rounded corners for polygons
     this.context.lineCap = "round";
 

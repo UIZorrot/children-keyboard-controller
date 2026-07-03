@@ -8,11 +8,10 @@ type Star = {
   speed: number;
 };
 
-// Generate some random stars for the background
-const STARS: Star[] = Array.from({ length: 150 }).map(() => ({
+const STARS: Star[] = Array.from({ length: 90 }).map(() => ({
   xRatio: Math.random(),
   yRatio: Math.random(),
-  size: Math.random() * 2 + 0.5,
+  size: Math.random() * 1.2 + 0.4,
   phase: Math.random() * Math.PI * 2,
   speed: 0.001 + Math.random() * 0.002
 }));
@@ -52,18 +51,17 @@ export class AtmosphereField {
       
       const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
       gradient.addColorStop(0, blob.color);
-      gradient.addColorStop(0.5, withAlpha(blob.color, 0.04));
+      gradient.addColorStop(0.5, withAlpha(blob.color, 0.018));
       gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
       
       context.fillStyle = gradient;
       context.fillRect(0, 0, width, height);
     }
 
-    // Twinkling stars
-    context.fillStyle = "#ffffff";
+    context.fillStyle = "rgba(176, 168, 150, 0.9)";
     for (const star of STARS) {
       const twinkle = (Math.sin(nowMs * star.speed + star.phase) + 1) / 2;
-      context.globalAlpha = 0.1 + twinkle * 0.7; // Base opacity 0.1, up to 0.8
+      context.globalAlpha = 0.035 + twinkle * 0.16;
       
       const x = star.xRatio * width;
       const y = star.yRatio * height;

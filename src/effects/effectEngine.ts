@@ -133,12 +133,12 @@ export class EffectEngine {
       effect.rotation += effect.rotationSpeed * seconds;
 
       if (effect.role === "ripple") {
-        effect.alpha = Math.max(0, 0.25 * (1 - t));
+        effect.alpha = Math.max(0, 0.14 * (1 - t));
       } else {
-        // Pop in quickly, then fade out slowly
         const appear = Math.min(1, t / 0.1);
         const fade = 1 - Math.max(0, t - 0.7) / 0.3;
-        effect.alpha = Math.max(0, appear * fade * (effect.role === "primary" ? 0.6 : 0.4));
+        const maxAlpha = effect.role === "primary" ? 0.32 : effect.role === "secondary" ? 0.24 : 0.16;
+        effect.alpha = Math.max(0, appear * fade * maxAlpha);
 
         // Screen boundary bounce for shapes
         if (effect.role === "primary" || effect.role === "secondary") {
@@ -212,7 +212,7 @@ export class EffectEngine {
         this.anchorPool.release(anchor);
         continue;
       }
-      anchor.alpha = Math.max(0, 0.5 * (1 - anchor.ageMs / anchor.ttlMs));
+      anchor.alpha = Math.max(0, 0.24 * (1 - anchor.ageMs / anchor.ttlMs));
     }
   }
 
@@ -226,7 +226,7 @@ export class EffectEngine {
     anchor.x = x;
     anchor.y = y;
     anchor.size = 8 + this.random() * 8;
-    anchor.alpha = 0.5;
+    anchor.alpha = 0.24;
     anchor.color = this.getRandomNeonColor();
     this.activeAnchors.push(anchor);
   }
@@ -283,7 +283,7 @@ export class EffectEngine {
     effect.size = startSize;
     effect.rotation = 0;
     effect.rotationSpeed = 0;
-    effect.alpha = 0.4;
+    effect.alpha = 0.14;
     effect.color = this.getRandomNeonColor();
     effect.accentColor = effect.color;
     this.activeEffects.push(effect);
@@ -294,7 +294,7 @@ export class EffectEngine {
     const effect = this.effectPool.acquire();
     const angle = this.random() * Math.PI * 2;
     const speed = 20 + this.random() * 60;
-    const size = 4 + this.random() * 6;
+    const size = 3 + this.random() * 4;
     effect.id = this.nextId++;
     effect.kind = "particle";
     effect.role = "particle";
